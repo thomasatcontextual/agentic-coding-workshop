@@ -1,0 +1,156 @@
+---
+description: "Agentic Coding Workshop - Global rules for all files"
+alwaysApply: true
+---
+
+# Agentic Coding Workshop
+
+A minimal Next.js starter for hands-on agentic coding development.
+
+## Quick Reference
+
+- **Framework**: Next.js 14 with App Router
+- **Styling**: Tailwind CSS + CVA for component variants
+- **Database**: SQLite (better-sqlite3) with simple query helpers
+- **Language**: TypeScript
+- **UI Pattern**: shadcn/ui style (reusable, unstyled components)
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 to see the app. The dev server hot-reloads on file changes.
+
+## Project Structure
+
+```
+app/                    # Next.js pages and API routes
+  ├── page.tsx          # Home page
+  └── api/              # API routes
+components/ui/          # Reusable UI components (shadcn pattern)
+lib/
+  ├── db/index.ts       # SQLite helpers: query, queryOne, run, exec
+  └── utils.ts          # Utility functions like cn() for class merging
+.cursor/rules/          # AI/Agent guidelines (this directory)
+AGENTS.md               # Detailed instructions for coding agents
+CLAUDE.md               # Project documentation
+```
+
+## Key Conventions
+
+### Code Style
+- **All TypeScript** - No `any` types
+- Use path aliases: `@/lib`, `@/components`, `@/app`
+- Prefer `const`, avoid `let` and `var`
+- Self-documenting code over comments
+
+### Database
+- Import from `@/lib/db`: `query`, `queryOne`, `run`, `exec`
+- Always use parameterized queries with `?` placeholders
+- Define TypeScript types for each table
+
+### React & Components
+- Default export from `app/*/page.tsx`
+- Named exports from `components/ui/*.tsx`
+- Use `React.forwardRef` for component refs
+- Use `cn()` utility for class merging
+- Tailwind CSS only - no inline styles
+
+### APIs
+- Create routes at `app/api/[path]/route.ts`
+- Export `GET`, `POST`, `PUT`, `PATCH`, `DELETE` functions
+- Always validate input before querying
+- Return appropriate HTTP status codes (201 for created, 404 for not found, etc.)
+
+## Common Tasks
+
+**Create a new page:**
+```bash
+# File: app/todos/page.tsx
+export default function TodosPage() {
+  return <div>Todos Page</div>;
+}
+```
+
+**Create a database table:**
+```typescript
+import { exec, query } from "@/lib/db";
+
+exec(`CREATE TABLE IF NOT EXISTS todos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  completed INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+```
+
+**Create an API endpoint:**
+```typescript
+// app/api/todos/route.ts
+import { NextResponse } from "next/server";
+import { query, run } from "@/lib/db";
+
+export async function GET() {
+  const todos = query("SELECT * FROM todos ORDER BY id DESC");
+  return NextResponse.json(todos);
+}
+
+export async function POST(request: Request) {
+  const { title } = await request.json();
+  const result = run("INSERT INTO todos (title) VALUES (?)", [title]);
+  return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
+}
+```
+
+**Create a UI component:**
+```tsx
+// components/ui/badge.tsx
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const badgeVariants = cva(
+  "inline-flex items-center rounded px-2 py-1 text-xs font-semibold",
+  {
+    variants: {
+      variant: {
+        default: "bg-foreground text-background",
+        secondary: "bg-gray-200 text-gray-900",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  }
+);
+
+export function Badge({ className, variant, ...props }) {
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+}
+```
+
+## Before Committing
+
+1. Run linting: `npm run lint` (must pass)
+2. Test in browser: `npm run dev` (verify features work)
+3. Build check: `npm run build` (ensure production build works)
+4. Commit with conventional format: `feat(component): description`
+
+## Useful Links
+
+- **AGENTS.md**: Detailed agent-specific instructions
+- **CLAUDE.md**: Full project documentation
+- **.cursor/rules/**: Specific guidelines for different aspects
+  - `code-style.mdc` - TypeScript and React conventions
+  - `database.mdc` - SQLite patterns and helpers
+  - `api-routes.mdc` - Next.js API route patterns
+  - `ui-components.mdc` - Component architecture with CVA
+  - `development.mdc` - Workflow, testing, and debugging
+
+## Framework Documentation
+
+- [Next.js Docs](https://nextjs.org/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [TypeScript](https://www.typescriptlang.org/docs)
+- [CVA](https://cva.style)
+- [Lucide Icons](https://lucide.dev/icons)
