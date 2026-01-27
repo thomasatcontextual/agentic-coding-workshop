@@ -1,0 +1,194 @@
+---
+description: "Development workflow, testing procedures, git commits, and debugging tips"
+alwaysApply: true
+---
+
+# Development Workflow
+
+Guidelines for development, testing, and project maintenance.
+
+## Before Making Changes
+
+1. **Review the project structure** - Understand where files go
+2. **Check existing code** - Follow patterns already in the codebase
+3. **Read AGENTS.md** - For agent-specific guidelines
+4. **Test locally** - Always verify changes work
+
+## Running the Development Server
+
+```bash
+npm install    # Install dependencies if needed
+npm run dev    # Start development server
+```
+
+Server runs on `http://localhost:3000`. Keep it running while developing.
+
+## Testing & Validation
+
+### Linting
+Before committing, fix all lint errors:
+
+```bash
+npm run lint
+```
+
+This runs ESLint to catch:
+- TypeScript type errors
+- Style violations
+- Import issues
+- Unused variables
+
+All code must pass linting.
+
+### Manual Testing
+After making changes:
+
+1. Check the feature works in browser at `http://localhost:3000`
+2. Open DevTools (F12) to check for console errors
+3. Test all user interactions (buttons, forms, navigation)
+4. Check responsive design with different window sizes
+
+### Building for Production
+Test production build locally:
+
+```bash
+npm run build   # Build for production
+npm run start   # Run production server
+```
+
+Production server runs on `http://localhost:3000` (different behavior than dev).
+
+## Code Quality Checklist
+
+Before committing code:
+
+- [ ] All linting errors fixed (`npm run lint` passes)
+- [ ] Code follows TypeScript conventions (no `any` types)
+- [ ] Imports use path aliases (`@/lib`, `@/components`)
+- [ ] Database queries are parameterized (use `?` placeholders)
+- [ ] Components export with `React.forwardRef` if needed
+- [ ] Tailwind classes used for styling (no inline styles)
+- [ ] UI components use `cn()` for class merging
+- [ ] Commit message is descriptive and follows conventional format
+- [ ] Manual testing completed in browser
+
+## Git Workflow
+
+### Commit Messages
+
+Follow conventional format:
+
+```
+feat(component): add new feature description
+fix(page): correct bug in page navigation
+refactor(db): simplify query logic
+docs(readme): update installation steps
+style(button): adjust spacing and colors
+test(api): add unit tests for validation
+chore(deps): update dependencies
+```
+
+Format: `<type>(<scope>): <description>`
+
+- **type**: feat, fix, refactor, docs, style, test, chore, perf
+- **scope**: Component, page, or area affected (optional but recommended)
+- **description**: 50 characters max, imperative mood ("add" not "added"), no period
+
+### Atomic Commits
+
+- One logical change per commit
+- Don't mix feature code with style changes
+- Don't mix unrelated features
+- Each commit should be independently buildable/deployable
+
+### Commit Process
+
+```bash
+# 1. Make your changes
+# 2. Test your changes
+npm run dev        # Test in browser
+npm run lint       # Fix any lint errors
+npm run build      # Ensure production build works
+
+# 3. Commit
+git add .
+git commit -m "feat(items): add item deletion"
+```
+
+## Debugging Tips
+
+**Console Errors**: Check browser DevTools console (F12)
+```
+Click F12 → Console tab → Look for red errors
+```
+
+**Build Errors**: Run build command
+```bash
+npm run build
+# Shows TypeScript errors and bundling issues
+```
+
+**Lint Errors**: Run lint
+```bash
+npm run lint
+# Shows code style problems
+```
+
+**Database Issues**:
+- Check that `local.db` file exists in project root
+- Verify SQL syntax with parameterized queries
+- Use `console.log` to debug query results
+
+**Hot Reload Not Working**:
+- Kill dev server (Ctrl+C)
+- Run `npm run dev` again
+- Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+
+## Project Maintenance
+
+### Adding New Dependencies
+
+If a package is needed:
+1. Check if already installed: `npm list package-name`
+2. Install: `npm install package-name`
+3. Update types if TypeScript: `npm install -D @types/package-name`
+4. Test that existing code still works
+5. Commit changes to `package.json` and `package-lock.json`
+
+### Removing Old Code
+
+- Delete unused functions, components, and variables completely
+- Don't leave `// removed` comments or dead code
+- Don't rename to `_oldFunction` - just delete it
+- Update imports in other files
+
+### Updating Documentation
+
+- Update AGENTS.md or CLAUDE.md if adding major features
+- Document new patterns or conventions in `.cursor/rules/` files
+- Keep README.md in sync with quick start steps
+- Update this development guide if workflow changes
+
+## Environment Variables
+
+If API keys or config needed:
+
+1. Create `.env.local` file (gitignored)
+2. Add variables: `API_KEY=value`
+3. Access in code: `process.env.API_KEY`
+4. Document in comments what each variable does
+
+Example:
+```bash
+# .env.local
+NEXT_PUBLIC_API_URL=http://localhost:3001
+API_SECRET_KEY=my-secret-key
+```
+
+## Performance Considerations
+
+- Minimize re-renders in React components
+- Use `next/image` for image optimization
+- Avoid large bundle imports - tree-shake when possible
+- Profile with DevTools to identify slow parts
+- Database: Use indexes for frequently queried columns

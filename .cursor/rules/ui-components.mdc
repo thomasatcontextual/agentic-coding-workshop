@@ -1,0 +1,208 @@
+---
+description: "shadcn/ui pattern for components, CVA variants, Tailwind styling, and composition"
+alwaysApply: false
+globs: ["components/ui/**/*.tsx"]
+---
+
+# UI Components
+
+All UI components follow the **shadcn/ui pattern**: reusable, unstyled components built with Tailwind CSS and CVA for variants.
+
+## Component File Structure
+
+**Location**: `components/ui/[component].tsx`
+
+**Template with variants:**
+```tsx
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  // Base styles
+  "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-foreground text-background hover:bg-foreground/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+      },
+      size: {
+        sm: "h-8 px-3 text-sm",
+        md: "h-10 px-4 text-base",
+        lg: "h-12 px-8 text-lg",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => (
+    <button
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    />
+  )
+);
+Button.displayName = "Button";
+```
+
+**Template without variants:**
+```tsx
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+
+export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
+  ({ className, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={cn("text-sm font-medium leading-none", className)}
+      {...props}
+    />
+  )
+);
+Label.displayName = "Label";
+```
+
+## Key Rules
+
+### Use React.forwardRef
+All components should support refs via `React.forwardRef` to allow consumers to access the underlying DOM element.
+
+### Class Merging with cn()
+Always use `cn()` from `@/lib/utils` to merge classes, never string concatenation:
+
+```tsx
+// Good
+className={cn(buttonVariants({ variant }), className)}
+
+// Bad
+className={`${baseClass} ${userClass}`}
+```
+
+### Tailwind Only
+- Only use Tailwind utility classes for styling
+- No CSS modules, no inline `style` prop, no CSS-in-JS
+- Use Tailwind's theming system for colors (via CSS variables in `globals.css`)
+
+### CVA for Variants
+Use class-variance-authority for component variants:
+
+```tsx
+const variants = cva("base-classes", {
+  variants: {
+    variant: {
+      primary: "bg-blue-500 text-white",
+      secondary: "bg-gray-500 text-white",
+    },
+    size: {
+      sm: "px-2 py-1 text-sm",
+      md: "px-4 py-2 text-base",
+    },
+  },
+  defaultVariants: {
+    variant: "primary",
+    size: "md",
+  },
+});
+```
+
+### Composition Over Inheritance
+Build complex components by composing simpler ones:
+
+```tsx
+// components/ui/card.tsx
+export const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("rounded-lg border bg-card", className)} {...props} />
+);
+
+export const CardHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("border-b p-6", className)} {...props} />
+);
+
+export const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("p-6", className)} {...props} />
+);
+```
+
+Then use together:
+```tsx
+<Card>
+  <CardHeader>Title</CardHeader>
+  <CardContent>Content</CardContent>
+</Card>
+```
+
+## Using Icons
+
+Import from lucide-react:
+
+```tsx
+import { Plus, Trash2, Check, ChevronDown } from "lucide-react";
+
+<Button>
+  <Plus className="mr-2 h-4 w-4" />
+  Add Item
+</Button>
+```
+
+Browse available icons at: https://lucide.dev/icons
+
+## Spacing & Layout
+
+Use Tailwind spacing utilities:
+- `space-y-4` - Vertical spacing between children
+- `space-x-2` - Horizontal spacing between children
+- `gap-4` - Grid/flex gap
+- `p-6`, `px-4`, `py-2` - Padding
+- `mb-2`, `mt-4` - Margin
+
+## Colors & Dark Mode
+
+Use CSS variables (defined in `globals.css`):
+```tsx
+className="text-foreground bg-background dark:text-foreground dark:bg-background"
+```
+
+Or semantic colors:
+```tsx
+className="bg-primary text-primary-foreground"
+className="border-input bg-muted"
+```
+
+## Accessible Components
+
+- Use semantic HTML (`<button>` not `<div onClick>`)
+- Include `aria-*` attributes for complex components
+- Support keyboard navigation
+- Ensure sufficient color contrast
+- Include `htmlFor` on labels linked to inputs
+
+## Props Pattern
+
+```tsx
+export interface CustomProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof customVariants> {
+  // Additional custom props
+  loading?: boolean;
+  disabled?: boolean;
+}
+```
+
+Always extend HTML element attributes and CVA variant props.

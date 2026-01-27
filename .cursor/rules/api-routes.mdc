@@ -1,0 +1,198 @@
+---
+description: "Next.js API route patterns, request/response handling, and error patterns"
+alwaysApply: false
+globs: ["app/api/**/*.ts"]
+---
+
+# API Routes
+
+API routes are created at `app/api/[path]/route.ts` and support HTTP methods as exported functions.
+
+## Basic Structure
+
+```typescript
+// app/api/items/route.ts
+import { NextResponse } from "next/server";
+import { query, run } from "@/lib/db";
+
+export async function GET(request: Request) {
+  // Handle GET requests
+  return NextResponse.json({ data: [] });
+}
+
+export async function POST(request: Request) {
+  // Handle POST requests
+  const body = await request.json();
+  return NextResponse.json({ created: true }, { status: 201 });
+}
+```
+
+## HTTP Methods
+
+Export named functions for each method:
+- `GET` - Retrieve data
+- `POST` - Create new data
+- `PUT` - Replace entire resource
+- `PATCH` - Partial update
+- `DELETE` - Remove data
+
+## Request Handling
+
+**Read JSON body:**
+```typescript
+const body = await request.json();
+```
+
+**Read query parameters:**
+```typescript
+const url = new URL(request.url);
+const id = url.searchParams.get("id");
+```
+
+**Read URL parameters (dynamic segments):**
+```typescript
+// File: app/api/items/[id]/route.ts
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = parseInt(params.id);
+  // Use id
+}
+```
+
+## Response Patterns
+
+**Success response:**
+```typescript
+return NextResponse.json({ success: true, data: items });
+```
+
+**Created (201):**
+```typescript
+return NextResponse.json({ id: newId }, { status: 201 });
+```
+
+**No content (204):**
+```typescript
+return new NextResponse(null, { status: 204 });
+```
+
+**Client error (400):**
+```typescript
+if (!name) {
+  return NextResponse.json(
+    { error: "Missing required field: name" },
+    { status: 400 }
+  );
+}
+```
+
+**Not found (404):**
+```typescript
+if (!item) {
+  return NextResponse.json(
+    { error: "Item not found" },
+    { status: 404 }
+  );
+}
+```
+
+**Server error (500):**
+```typescript
+return NextResponse.json(
+  { error: "Database error" },
+  { status: 500 }
+);
+```
+
+## Error Handling
+
+Always validate input before querying:
+
+```typescript
+export async function POST(request: Request) {
+  try {
+    const { name, description } = await request.json();
+
+    // Validate
+    if (!name || typeof name !== "string") {
+      return NextResponse.json(
+        { error: "name is required and must be a string" },
+        { status: 400 }
+      );
+    }
+
+    // Create
+    const result = run(
+      "INSERT INTO items (name, description) VALUES (?, ?)",
+      [name, description]
+    );
+
+    return NextResponse.json(
+      { id: result.lastInsertRowid, name, description },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("POST /api/items:", error);
+    return NextResponse.json(
+      { error: "Failed to create item" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## CORS & Headers
+
+For client-side fetch requests, CORS is automatic same-origin. For cross-origin:
+
+```typescript
+return NextResponse.json(data, {
+  headers: {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
+    "Access-Control-Allow-Headers": "Content-Type",
+  },
+});
+```
+
+## External API Calls
+
+Fetch external APIs directly:
+
+```typescript
+export async function GET() {
+  const res = await fetch(
+    "https://api.example.com/endpoint?param=value"
+  );
+  const data = await res.json();
+  return NextResponse.json(data);
+}
+```
+
+For APIs with authentication, use environment variables:
+
+```typescript
+const apiKey = process.env.API_KEY;
+const res = await fetch("https://api.example.com/data", {
+  headers: { Authorization: `Bearer ${apiKey}` },
+});
+```
+
+## Testing API Routes
+
+Use curl or fetch from browser console:
+
+```bash
+# GET
+curl http://localhost:3000/api/items
+
+# POST with JSON
+curl -X POST http://localhost:3000/api/items \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My Item","description":"Details"}'
+
+# With parameters
+curl "http://localhost:3000/api/items?limit=10&sort=id"
+```

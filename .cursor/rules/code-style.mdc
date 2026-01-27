@@ -1,0 +1,55 @@
+---
+description: "Code style conventions for TypeScript, React, components, and styling"
+alwaysApply: true
+---
+
+# Code Style & Conventions
+
+## TypeScript & General
+
+- All code must be **TypeScript** with proper types (no `any`)
+- Use path aliases: `@/lib`, `@/components`, `@/app` (defined in `tsconfig.json`)
+- Prefer **const** over **let**, avoid **var**
+- Use **template literals** for string formatting
+- Provide **clear variable and function names** over comments
+- Only comment the **why**, not the **what**
+- Keep functions **focused and single-responsibility**
+
+## React & Components
+
+- Default export from `app/*/page.tsx` files
+- Named exports from `components/ui/*.tsx` files
+- Use `React.forwardRef` for UI components to support refs
+- Props should extend appropriate HTML element interfaces
+- Use **server components** by default, only add `'use client'` when needed (interactivity, hooks)
+- Avoid inline objects in JSX (extract to variables)
+
+## Styling
+
+- Use **Tailwind CSS utility classes** only
+- Use `cn()` utility from `@/lib/utils` for class merging
+- Use **CVA** (class-variance-authority) for component variants
+- Never use inline styles or CSS modules
+- Responsive prefixes: `sm:`, `md:`, `lg:` follow Tailwind breakpoints
+- Dark mode: Prefix with `dark:` for dark mode colors
+
+## Imports
+
+Order imports as:
+1. React & Next.js imports
+2. Third-party packages
+3. Local lib and component imports
+
+```tsx
+import { ReactNode } from "react";
+import { Card } from "@/components/ui/card";
+import { query } from "@/lib/db";
+```
+
+## Naming Conventions
+
+- **Components**: PascalCase (`Button`, `UserCard`)
+- **Functions/Variables**: camelCase (`getUserId`, `itemCount`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_ITEMS`, `API_TIMEOUT`)
+- **Types/Interfaces**: PascalCase (`ButtonProps`, `User`)
+- **Database tables**: lowercase_snake_case (`user_items`, `task_list`)

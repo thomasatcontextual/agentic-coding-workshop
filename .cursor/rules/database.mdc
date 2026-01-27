@@ -1,0 +1,118 @@
+---
+description: "SQLite database conventions, parameterized queries, and table patterns"
+alwaysApply: false
+globs: ["**/*.ts", "**/*.tsx"]
+---
+
+# Database Conventions
+
+All database interactions use SQLite with the helpers from `@/lib/db/index.ts`.
+
+## Database Helpers
+
+Import from `@/lib/db`:
+```typescript
+import { query, queryOne, run, exec } from "@/lib/db";
+```
+
+- **`exec(sql)`**: Execute DDL (CREATE TABLE, ALTER TABLE, etc.) - no parameterization needed
+- **`query<T>(sql, params?)`**: SELECT multiple rows - returns `T[]`
+- **`queryOne<T>(sql, params?)`**: SELECT single row - returns `T | undefined`
+- **`run(sql, params?)`**: INSERT, UPDATE, DELETE - returns `{ changes: number, lastInsertRowid: number }`
+
+## Parameterized Queries
+
+Always use `?` placeholders to prevent SQL injection:
+
+```typescript
+// Good - parameterized
+const user = queryOne("SELECT * FROM users WHERE id = ?", [userId]);
+const items = query("SELECT * FROM items WHERE user_id = ? AND status = ?", [userId, "active"]);
+
+// Bad - string concatenation
+const user = queryOne(`SELECT * FROM users WHERE id = ${userId}`); // SQL injection risk!
+```
+
+## Table Creation
+
+Create tables in server components, server actions, or API routes using `exec()`:
+
+```typescript
+// In app/api/init/route.ts or similar
+exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+```
+
+## TypeScript Types for Queries
+
+Define types for each table:
+
+```typescript
+// Define at top of file or in a types.ts
+type User = {
+  id: number;
+  email: string;
+  name: string | null;
+  created_at: string;
+};
+
+// Use when querying
+const user = queryOne<User>("SELECT * FROM users WHERE id = ?", [id]);
+const users = query<User>("SELECT * FROM users");
+```
+
+## Common Patterns
+
+**Insert with returning ID:**
+```typescript
+const result = run(
+  "INSERT INTO items (name, description) VALUES (?, ?)",
+  [name, description]
+);
+const newId = result.lastInsertRowid;
+```
+
+**Insert multiple rows:**
+```typescript
+items.forEach(item => {
+  run("INSERT INTO items (name) VALUES (?)", [item.name]);
+});
+```
+
+**Update with conditions:**
+```typescript
+const { changes } = run(
+  "UPDATE items SET name = ? WHERE id = ? AND user_id = ?",
+  [newName, itemId, userId]
+);
+if (changes === 0) throw new Error("Item not found or not yours");
+```
+
+**Delete with safety check:**
+```typescript
+const { changes } = run(
+  "DELETE FROM items WHERE id = ? AND user_id = ?",
+  [itemId, userId]
+);
+if (changes === 0) throw new Error("Item not found or not yours");
+```
+
+## Database File
+
+- **Location**: `local.db` in project root (gitignored)
+- **Auto-creation**: Database file and tables created on first query
+- **Backup**: Data is local only - not part of version control
+- **Reset**: Delete `local.db` to reset database to initial state
+
+## Performance Tips
+
+- Use indexes for frequently queried columns: `CREATE INDEX idx_user_id ON items(user_id)`
+- Avoid `SELECT *` in loops - query only needed columns
+- Use `WHERE` clauses to filter early
+- Batch operations when possible
