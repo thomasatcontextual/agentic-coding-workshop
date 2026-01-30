@@ -11,11 +11,11 @@ You cannot push to it unless you are a collaborator.
    - Click **Fork** (top right) and create the fork under your account.
 
 2. **Add your fork as a remote and push**
-   - Replace `YOUR_GITHUB_USERNAME` with your GitHub username:
+   - A remote named `fork` is already set to `https://github.com/thomasatcontextual/agentic-coding-workshop.git`. After creating the fork on GitHub, run:
    ```bash
-   git remote add fork https://github.com/YOUR_GITHUB_USERNAME/agentic-coding-workshop.git
    git push fork main
    ```
+   - If you use a different GitHub username, run: `git remote set-url fork https://github.com/YOUR_USERNAME/agentic-coding-workshop.git` then `git push fork main`.
 
 3. **(Optional)** Rename remotes so your fork is the default:
    ```bash
