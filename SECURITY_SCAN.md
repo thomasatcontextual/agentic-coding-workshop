@@ -5,6 +5,12 @@
 
 ---
 
+## Verdict
+
+**OK for workshop use.** Lint and build pass; no critical vulnerabilities; code-level checks are clean. Dependency audit reports 6 issues (4 high, 2 moderate) in dev/build tooling only; fixing them would require major version upgrades (Next 16, ESLint 9). For local development and workshop demos, the current setup is acceptable.
+
+---
+
 ## 1. Environment verification
 
 | Step | Command | Result |
@@ -59,3 +65,13 @@ npm audit
 ```
 
 Update this file with the date and any result changes after future scans.
+
+---
+
+## 5. Last full scan
+
+- **Date:** 2026-01-30  
+- **Lint:** ✔ No ESLint warnings or errors  
+- **Build:** ✔ Next.js 14.2.35, static pages generated  
+- **npm audit:** 6 vulnerabilities (0 critical, 4 high, 2 moderate); all in dev/build tooling; no non-breaking fixes available  
+- **Code scan:** No SQL string concatenation; no secrets in source; DB uses parameterized queries only
